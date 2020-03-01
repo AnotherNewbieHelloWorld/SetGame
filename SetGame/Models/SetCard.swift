@@ -29,13 +29,14 @@ struct SetCard: CustomStringConvertible {
      }
     
     static func isSet(cards: [SetCard]) -> Bool {
-         guard cards.count == 3 else { return false }
-         let color = Set(cards.map { (selectedCard) in selectedCard.color }).count
-         let shape = Set(cards.map { $0.shape }).count
-         let number = Set(cards.map { $0.number }).count
-         let fill = Set(cards.map { $0.fill }).count
-
-         return color != 2 && shape != 2 && number != 2 && fill != 2
+//         guard cards.count == 3 else { return false }
+//         let color = Set(cards.map { (selectedCard) in selectedCard.color }).count
+//         let shape = Set(cards.map { $0.shape }).count
+//         let number = Set(cards.map { $0.number }).count
+//         let fill = Set(cards.map { $0.fill }).count
+//
+//         return color != 2 && shape != 2 && number != 2 && fill != 2
+        return true
      }
 }
 

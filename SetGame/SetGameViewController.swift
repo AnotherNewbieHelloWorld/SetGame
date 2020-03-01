@@ -8,15 +8,14 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class SetGameViewController: UIViewController {
     
     private var game = SetGame() {
-        didSet {
-            if game.deckCount == 0 && game.isGameOver() {
-                winAlertController()
-                return
-            }
-        }
+        didSet { if game.deckCount == 0 && game.isGameOver() { winAlertController() } }
+    }
+    
+    private var matchedSetCardViews: [SetCardView] {
+        return  boardView.cardViews.filter { $0.isMatched == true }
     }
     
     @IBOutlet weak var boardView: BoardView! {
@@ -56,7 +55,7 @@ class ViewController: UIViewController {
             let cardViews = boardView.cardViews[..<game.cardsOnTable.count ]
             boardView.cardViews = Array(cardViews)
         }
-        let numberOfCardViews =  boardView.cardViews.count
+        let numberOfCardViews = boardView.cardViews.count
 
         for index in game.cardsOnTable.indices {
             let card = game.cardsOnTable[index]

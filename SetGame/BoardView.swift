@@ -32,20 +32,34 @@ class BoardView: UIView {
         }
     }
     
+    override func layoutIfNeeded() {
+        super.layoutIfNeeded()
+        layoutSubviews()
+    }
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         
         var grid = Grid(layout: Grid.Layout.aspectRatio(Constant.cellAspectRatio), frame: bounds)
         grid.cellCount = cardViews.count
         
-        for row in 0..<grid.dimensions.rowCount {
-            for column in 0..<grid.dimensions.columnCount {
-                if cardViews.count > (row * grid.dimensions.columnCount + column) {
-                    
-                    cardViews[row * grid.dimensions.columnCount + column].frame = grid[row,column]!.insetBy(dx: Constant.spacingDx, dy: Constant.spacingDy)
+        UIViewPropertyAnimator.runningPropertyAnimator(
+            withDuration: 0.7,
+            delay: 0,
+            options: [.allowUserInteraction],
+            animations: { [weak self] in
+                for row in 0..<grid.dimensions.rowCount {
+                    for column in 0..<grid.dimensions.columnCount {
+                        if (self?.cardViews.count) != nil {
+                            if (self?.cardViews.count)! > (row * grid.dimensions.columnCount + column) {
+                                
+                                self?.cardViews[row * grid.dimensions.columnCount + column].frame = grid[row,column]!.insetBy(dx: Constant.spacingDx, dy: Constant.spacingDy)
+                            }
+                        }
+                    }
                 }
             }
-        }
+        )
     }
     
     struct Constant {

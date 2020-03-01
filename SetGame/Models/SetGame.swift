@@ -68,17 +68,19 @@ struct SetGame {
     }
     
     private mutating func replaceOrRemove3Cards() {
-        //        if let take3Cards =  take3FromDeck() { // less complicated game
-        if cardsOnTable.count == Constants.startNumberCards, let take3Cards = takeThreeFromDeck() {
+        if let take3Cards =  take3FromDeck() { // less complicated game
             cardsOnTable.replace(elements: cardsTryMatched, with: take3Cards)
-        } else {
-            cardsOnTable.remove(elements: cardsTryMatched)
         }
+//        if cardsOnTable.count == Constants.startNumberCards, let take3Cards = take3FromDeck() {
+//            cardsOnTable.replace(elements: cardsTryMatched, with: take3Cards)
+//        } else {
+//            cardsOnTable.remove(elements: cardsTryMatched)
+//        }
         cardsRemoved += cardsTryMatched
         cardsTryMatched.removeAll()
     }
     
-    mutating func takeThreeFromDeck() -> [SetCard]? {
+    mutating func take3FromDeck() -> [SetCard]? {
         var threeCards = [SetCard]()
         for _ in 0...2 {
             if let card = deck.draw() {
@@ -91,7 +93,7 @@ struct SetGame {
     }
     
     mutating func dealThree() {
-        if let dealThreeCards = takeThreeFromDeck() {
+        if let dealThreeCards = take3FromDeck() {
             cardsOnTable += dealThreeCards
         }
     }
