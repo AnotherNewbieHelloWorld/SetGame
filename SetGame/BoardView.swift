@@ -10,56 +10,63 @@ import UIKit
 
 class BoardView: UIView {
     
-    var cardViews = [SetCardView]() {
-        willSet {
-            removeSubviews()
-        }
-        didSet {
-            addSubviews()
-            setNeedsLayout()
-        }
-    }
+    var cardViews = [SetCardView]()
     
-    private func removeSubviews() {
-        for card in cardViews {
-            card.removeFromSuperview()
-        }
+    var rowGrid: Int {
+        return gridCards?.dimensions.rowCount ?? 0
     }
+    private var gridCards: Grid?
     
-    private func addSubviews() {
-        for card in cardViews {
-            addSubview(card)
+    private func layoutSetCards() {
+        if let grid = gridCards {
+            let columnsGrid = grid.dimensions.columnCount
+            for row in 0..<rowGrid {
+                for column in 0..<columnsGrid {
+                    let currentIndex = row * columnsGrid + column
+                    if cardViews.count > currentIndex {
+                        UIViewPropertyAnimator.runningPropertyAnimator(
+                            withDuration: 0.3,
+                            delay: TimeInterval(row+column) * 0.05,
+                            options: [.curveEaseInOut],
+                            animations: {
+                                self.cardViews[currentIndex].frame =
+                                    grid[row,column]!.insetBy(
+                                        dx: Constant.spacingDx,
+                                        dy: Constant.spacingDy)}
+                        )
+                    }
+                }
+            }
         }
-    }
-    
-    override func layoutIfNeeded() {
-        super.layoutIfNeeded()
-        layoutSubviews()
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        
-        var grid = Grid(layout: Grid.Layout.aspectRatio(Constant.cellAspectRatio), frame: bounds)
-        grid.cellCount = cardViews.count
-        
-        UIViewPropertyAnimator.runningPropertyAnimator(
-            withDuration: 0.7,
-            delay: 0,
-            options: [.allowUserInteraction],
-            animations: { [weak self] in
-                for row in 0..<grid.dimensions.rowCount {
-                    for column in 0..<grid.dimensions.columnCount {
-                        if (self?.cardViews.count) != nil {
-                            if (self?.cardViews.count)! > (row * grid.dimensions.columnCount + column) {
-                                
-                                self?.cardViews[row * grid.dimensions.columnCount + column].frame = grid[row,column]!.insetBy(dx: Constant.spacingDx, dy: Constant.spacingDy)
-                            }
-                        }
-                    }
-                }
-            }
-        )
+        gridCards = Grid(layout: Grid.Layout.aspectRatio(Constant.cellAspectRatio), frame: bounds)
+        gridCards?.cellCount = cardViews.count
+        layoutSetCards()
+    }
+    
+    func addCardViews(newCardViews: [SetCardView]) {
+        cardViews += newCardViews
+        newCardViews.forEach { addSubview($0) }
+        layoutIfNeeded()
+    }
+    
+    func removaCardViews(removedCardViews: [SetCardView]) {
+        removedCardViews.forEach {
+            cardViews.remove(elements: [$0])
+            $0.removeFromSuperview()
+        }
+        layoutIfNeeded()
+    }
+    
+    func resetCards() {
+        cardViews.forEach {
+            $0.removeFromSuperview()
+        }
+        cardViews = []
+        layoutIfNeeded()
     }
     
     struct Constant {

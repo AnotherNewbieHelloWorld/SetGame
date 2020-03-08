@@ -147,7 +147,78 @@ class SetCardView: UIView {
         }
     }
     
-    // MARK: - Fills
+    func copyCard() -> SetCardView {
+        let copy = SetCardView()
+        copy.symbolInt =  symbolInt
+        copy.fillInt = fillInt
+        copy.colorInt = colorInt
+        copy.count =  count
+        copy.isSelected =  false
+       
+        copy.isFaceUp = true
+        copy.bounds = bounds
+        copy.frame = frame
+        copy.alpha = 1
+        return copy
+    }
+    
+    //      MARK: - Deal a card Animation
+    func animateDeal(from deckCenter: CGPoint, delay: TimeInterval) {
+        let currentCenter = center
+        let currentBounds = bounds
+        
+        center = deckCenter
+        alpha = 1
+        bounds = CGRect(x: 0.0, y: 0.0, width: 0.1*bounds.width, height: 0.1*bounds.height)
+        isFaceUp = false
+        UIViewPropertyAnimator.runningPropertyAnimator(
+            withDuration: 1,
+            delay: delay,
+            options: [],
+            animations: {
+                self.center = currentCenter
+                self.bounds = currentBounds
+            },
+            completion: { position in
+                UIView.transition(
+                    with: self,
+                    duration: 0.3,
+                    options: [.transitionFlipFromLeft],
+                    animations: { self.isFaceUp = true }
+                )
+            }
+        )
+    }
+    
+    var addDiscardPile: (() -> Void)?
+    
+    func animateFly(to discardPileCenter: CGPoint, delay: TimeInterval) {
+        UIViewPropertyAnimator.runningPropertyAnimator(
+            withDuration: 1,
+            delay: delay,
+            options: [],
+            animations: {
+                self.center = discardPileCenter
+            },
+            completion: { position in
+                UIView.transition(
+                    with: self,
+                    duration: 0.75,
+                    options: [.transitionFlipFromLeft],
+                    animations: {
+                        self.isFaceUp = false
+                        self.transform = CGAffineTransform.identity.rotated(by: CGFloat.pi/2.0)
+                        self.bounds = CGRect(x: 0.0, y: 0.0, width: 0.5*self.bounds.width, height: 0.5*self.bounds.height)
+                    },
+                    completion: { (finished) in
+                        self.addDiscardPile?()
+                    }
+                )
+            }
+        )
+    }
+    
+    //      MARK: - Fills
     
     private func stripeShape(path: UIBezierPath, in rect: CGRect) {
         let context = UIGraphicsGetCurrentContext()
@@ -168,20 +239,8 @@ class SetCardView: UIView {
         stripe.addLine(to: CGPoint(x: bounds.maxX, y: bounds.midY))
         stripe.stroke()
     }
-        /*
-        let stripe = UIBezierPath()
-        stripe.lineWidth = 1.0
-        stripe.move(to: CGPoint(x: rect.minX, y: bounds.minY))
-        stripe.addLine(to: CGPoint(x: rect.minX, y: bounds.maxY))
-        let stripeCount = Int(faceFrame.width / interStripeSpace)
-        for _ in 1...stripeCount {
-            let translation = CGAffineTransform(translationX: interStripeSpace, y: 0)
-            stripe.apply(translation)
-            stripe.stroke()
-        */
     
-    
-    // MARK: - Shapes
+    //      MARK: - Shapes
     private func pathForSquiggle(in rect: CGRect) -> UIBezierPath {
         let upperSquiggle = UIBezierPath()
         let sqdx = rect.width * 0.1
@@ -265,7 +324,7 @@ class SetCardView: UIView {
         return diamond
     }
     
-    // MARK: - Design
+    //      MARK: - Design
     
     private func configureState() {
         backgroundColor = #colorLiteral(red: 0, green: 0, blue: 0, alpha: 0)
@@ -301,7 +360,7 @@ class SetCardView: UIView {
 }
 
 
-// MARK: - Extensions
+//      MARK: Extensions
 extension SetCardView {
     private struct SizeRatio {
         static let cornerRadiusToBoundsHeight: CGFloat = 0.05
