@@ -37,12 +37,24 @@ class CardBehavior: UIDynamicBehavior {
     func addItem(_ item: UIDynamicItem) {
         collisionBehavior.addItem(item)
         itemBehavior.addItem(item)
+        Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { (timer) in
+            self.collisionBehavior.removeItem(item)
+            self.snap(item)
+        }
         push(item)
     }
     
     func removeItem(_ item: UIDynamicItem) {
         collisionBehavior.removeItem(item)
         itemBehavior.removeItem(item)
+    }
+    
+    var snapPoint = CGPoint()
+    
+    private func snap(_ item: UIDynamicItem) {
+        let snap = UISnapBehavior(item: item, snapTo: snapPoint)
+        snap.damping = 0.2
+        addChildBehavior(snap)
     }
     
     override init() {
