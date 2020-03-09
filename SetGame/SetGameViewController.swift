@@ -95,7 +95,9 @@ class SetGameViewController: UIViewController, UIDynamicAnimatorDelegate {
         flyAwayAnimation()
         
         // Deal cad animation
-        dealAnimation()
+        if !dealButton.isHidden {
+            dealAnimation()
+        }
     }
     
     private func updateCardView(_ cardView: SetCardView, for card: SetCard) {
