@@ -8,7 +8,7 @@
 
 import UIKit
 
-class SetGameViewController: UIViewController, UIDynamicAnimatorDelegate {
+class SetGameViewController: UIViewController {
     
     private var game = SetGame() {
         didSet { if game.deckCount == 0 && game.isGameOver() { winAlertController() } }
@@ -27,12 +27,7 @@ class SetGameViewController: UIViewController, UIDynamicAnimatorDelegate {
         }
     }
     
-    private lazy var animator: UIDynamicAnimator = {
-        let animator = UIDynamicAnimator(referenceView: self.boardView)
-        animator.delegate = self
-        return animator
-    }()
-    
+    lazy var animator = UIDynamicAnimator(referenceView: self.boardView)
     lazy var cardBehavior = CardBehavior(in: animator)
     
     @IBOutlet weak private var dealButton: UIButton!
@@ -44,15 +39,15 @@ class SetGameViewController: UIViewController, UIDynamicAnimatorDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        dealButton.layer.cornerRadius = 10.0
-        setButton.layer.cornerRadius = 10.0
+        dealButton.layer.cornerRadius = 15.0
+        setButton.layer.cornerRadius = 15.0
         updateViewFromModel()
         //scoreLabel.text = "Try to make a Set!"
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        cardBehavior.snapPoint = discardPileCenter
+        //cardBehavior.snapPoint = discardPileCenter
     }
     
     private func updateViewFromModel() {
@@ -117,10 +112,10 @@ class SetGameViewController: UIViewController, UIDynamicAnimatorDelegate {
     
     private func dealAnimation() {
         var currentDealCard = 0
-        let timeInterval = 0.15 * Double(boardView.rowGrid + 1)
+        let timeInterval = 0.05 * Double(boardView.rowGrid + 1)
         Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: false) { (timer) in
             self.dealSetCardViews.forEach {
-                $0.animateDeal(from: self.deckCenter, delay: TimeInterval(currentDealCard) * 0.25)
+                $0.animateDeal(from: self.deckCenter, delay: TimeInterval(currentDealCard) * 0.05)
                 currentDealCard += 1
             }
         }
@@ -130,9 +125,17 @@ class SetGameViewController: UIViewController, UIDynamicAnimatorDelegate {
         let fliedCardsCount = matchedSetCardViews.filter{$0.alpha<1 && $0.alpha>0}.count
         if game.isSet != nil, game.isSet!, fliedCardsCount == 0 {
             
+            tmpCards.forEach{ $0.removeFromSuperview() }
+            tmpCards = []
+            
             matchedSetCardViews.forEach {
                 $0.alpha = 0.2
                 tmpCards += [$0.copyCard()]
+            }
+            
+            tmpCards.forEach {
+                boardView.addSubview($0)
+                cardBehavior.addItem($0)
             }
             
             tmpCards[2].addDiscardPile = { [weak self] in
@@ -142,9 +145,14 @@ class SetGameViewController: UIViewController, UIDynamicAnimatorDelegate {
                 }
             }
             
-            tmpCards.forEach {
-                boardView.addSubview($0)
-                cardBehavior.addItem($0)
+            Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { (timer) in
+                var j = 1
+                for tmpCard in self.tmpCards {
+                    self.cardBehavior.removeItem(tmpCard)
+                    tmpCard.animateFly(to: self.discardPileCenter,
+                                    delay: TimeInterval(j) * 0.25)
+                    j += 1
+                }
             }
         }
     }
