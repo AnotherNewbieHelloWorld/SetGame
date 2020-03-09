@@ -8,7 +8,7 @@
 
 import UIKit
 
-class SetGameViewController: UIViewController {
+class SetGameViewController: UIViewController, UIDynamicAnimatorDelegate {
     
     private var game = SetGame() {
         didSet { if game.deckCount == 0 && game.isGameOver() { winAlertController() } }
@@ -22,16 +22,17 @@ class SetGameViewController: UIViewController {
     
     @IBOutlet weak var boardView: BoardView! {
         didSet {
-//            let swipe = UISwipeGestureRecognizer(target: self, action: #selector(dealThreeMoreButtonPressed))
-//            swipe.direction = .down
-//            boardView.addGestureRecognizer(swipe)
-//
             let rotate = UIRotationGestureRecognizer(target: self, action: #selector(reshuffle))
             boardView.addGestureRecognizer(rotate)
         }
     }
     
-    lazy var animator = UIDynamicAnimator(referenceView: view)
+    private lazy var animator: UIDynamicAnimator = {
+        let animator = UIDynamicAnimator(referenceView: self.boardView)
+        animator.delegate = self
+        return animator
+    }()
+    
     lazy var cardBehavior = CardBehavior(in: animator)
     
     @IBOutlet weak private var dealButton: UIButton!
@@ -47,6 +48,11 @@ class SetGameViewController: UIViewController {
         setButton.layer.cornerRadius = 10.0
         updateViewFromModel()
         //scoreLabel.text = "Try to make a Set!"
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        cardBehavior.snapPoint = discardPileCenter
     }
     
     private func updateViewFromModel() {
@@ -122,23 +128,9 @@ class SetGameViewController: UIViewController {
         let fliedCardsCount = matchedSetCardViews.filter{$0.alpha<1 && $0.alpha>0}.count
         if game.isSet != nil, game.isSet!, fliedCardsCount == 0 {
             
-            tmpCards.forEach { $0.removeFromSuperview() }
-            tmpCards = []
-            
             matchedSetCardViews.forEach {
                 $0.alpha = 0.2
                 tmpCards += [$0.copyCard()]
-            }
-            
-            tmpCards.forEach {
-                boardView.addSubview($0)
-                cardBehavior.addItem($0)
-            }
-            
-            tmpCards[0].addDiscardPile = { [weak self] in
-                if let countSets = self?.game.numberOfSets, countSets > 0 {
-                    self?.setButton.alpha = 0
-                }
             }
             
             tmpCards[2].addDiscardPile = { [weak self] in
@@ -148,14 +140,33 @@ class SetGameViewController: UIViewController {
                 }
             }
             
-            Timer.scheduledTimer(withTimeInterval: 2, repeats: false) { (timer) in
-                var j = 1
-                for tmpCard in self.tmpCards {
-                    self.cardBehavior.removeItem(tmpCard)
-                    tmpCard.animateFly(to: self.discardPileCenter, delay: TimeInterval(j)*0.25)
-                    j += 1
-                }
+            tmpCards.forEach {
+                boardView.addSubview($0)
+                cardBehavior.addItem($0)
             }
+        }
+    }
+    
+    func dynamicAnimatorDidPause(_ animator: UIDynamicAnimator) {
+        tmpCards.forEach { (tmpCard) in
+            UIView.transition(
+                with: tmpCard,
+                duration: 0.5,
+                options: [.transitionFlipFromLeft],
+                animations: {
+                    tmpCard.isFaceUp = false
+                    tmpCard.transform = CGAffineTransform.identity.rotated(by: CGFloat.pi/2.0)
+                    tmpCard.bounds = CGRect(x: 0.0, y: 0.0,
+                                            width: 0.5*tmpCard.bounds.width,
+                                            height: 0.5*tmpCard.bounds.height)
+                },
+                completion: { (isComplete) in
+                    self.cardBehavior.removeItem(tmpCard)
+                    tmpCard.addDiscardPile?()
+                    tmpCard.removeFromSuperview()
+                    self.tmpCards.remove(elements: [tmpCard])
+                }
+            )
         }
     }
     
